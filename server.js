@@ -11,7 +11,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const app = express();
-const port = 9000;
+const port = process.env.PORT || 9000;
 const saltRounds = 10;
 app.use(cors());
 
@@ -23,12 +23,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 const secretKey = process.env.SESSION_SECRET;
 
+// Update the connection to use DATABASE_URL
 const db = new pg.Client({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false, // Required for secure connection to Supabase
+  },
 });
 db.connect();
 
