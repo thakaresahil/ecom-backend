@@ -278,20 +278,23 @@ app.post("/addtocart", authenticateToken, async (req, res) => {
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  
   try {
-    const result = await db.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
+    // Check if user exists
+    const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
     const user = result.rows[0];
 
+    // If user is found and the password matches
     if (user && (await bcrypt.compare(password, user.passhash))) {
-      const token = generateToken(user);
+      const token = generateToken(user); // Assuming you have this function properly implemented
       res.json({ token, uid: user.id });
     } else {
-      res.json({ error: "Invalid credentials" });
+      // Return a 401 Unauthorized status for invalid credentials
+      res.status(401).json({ error: "Invalid Credentials" });
     }
   } catch (error) {
-    res.status(500).json({ error: error.meggase });
+    // Return 500 Internal Server Error for unexpected errors
+    res.status(500).json({ error: error.message });
   }
 });
 
