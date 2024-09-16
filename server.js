@@ -225,10 +225,10 @@ app.patch("/buyitem", authenticateToken, async (req, res) => {
 });
 
 app.post("/signup/user", async (req, res) => {
-  const { phonenumber, email, password } = req.body;
-
+  const { pnum, email, passhash } = req.body;
+  console.log(req.body)
   // Check if required fields are provided
-  if (!phonenumber || !email || !password) {
+  if (!pnum || !email || !passhash) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
@@ -236,7 +236,7 @@ app.post("/signup/user", async (req, res) => {
 
   try {
     // Hash the password
-    const hashPassword = await bcrypt.hash(password, saltRounds);
+    const hashPassword = await bcrypt.hash(passhash, saltRounds);
 
     // Check if the user already exists
     const isUser = await db.query("SELECT * FROM users WHERE email = $1", [email]);
@@ -248,7 +248,7 @@ app.post("/signup/user", async (req, res) => {
       // Insert the new user into the database
       const result = await db.query(
         "INSERT INTO users (pnum, email, passhash) VALUES ($1, $2, $3) RETURNING *",
-        [phonenumber, email, hashPassword]
+        [pnum, email, hashPassword]
       );
       
       console.log(result);
