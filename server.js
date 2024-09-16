@@ -12,8 +12,7 @@ import jwt from "jsonwebtoken";
 
 const app = express();
 const port = process.env.PORT || 9000;
-const saltRounds = 10;
-app.use(cors());
+app.use(cors( {origin: 'https://ecom-frontend-8glh.onrender.com'}));
 
 env.config();
 
@@ -226,30 +225,38 @@ app.patch("/buyitem", authenticateToken, async (req, res) => {
 });
 
 app.post("/signup/user", async (req, res) => {
-  const phonenumber = req.body.phonenumber;
-  const email = req.body.email;
-  const password = req.body.password;
+  const { phonenumber, email, password } = req.body;
 
-  const hashPassword = await bcrypt.hash(password, saltRounds);
+  // Check if required fields are provided
+  if (!phonenumber || !email || !password) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+
+  const saltRounds = 10; // Ensure const/let is used to declare variables
 
   try {
-    const isUser = await db.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
+    // Hash the password
+    const hashPassword = await bcrypt.hash(password, saltRounds);
+
+    // Check if the user already exists
+    const isUser = await db.query("SELECT * FROM users WHERE email = $1", [email]);
 
     if (isUser.rowCount > 0) {
       console.log("User already exists");
-      return res.json({ error: "User already exists" });
+      return res.status(409).json({ error: "User already exists" }); // Use HTTP 409 Conflict for duplicate resource
     } else {
+      // Insert the new user into the database
       const result = await db.query(
         "INSERT INTO users (pnum, email, passhash) VALUES ($1, $2, $3) RETURNING *",
         [phonenumber, email, hashPassword]
       );
+      
       console.log(result);
       const user = result.rows[0];
-      res.status(201).json(user);
+      res.status(201).json(user); // Return the newly created user with HTTP 201
     }
   } catch (error) {
+    console.error("Error during user signup:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
